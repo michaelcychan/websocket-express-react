@@ -6,9 +6,12 @@ function App() {
   const [messages, setMessages] = useState<string[]>([]);
   const wsRef = useRef<null | WebSocket>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const [username, setUsername] = useState<string>('');
 
   useEffect(() => {
-    const ws = new WebSocket('ws://localhost:8080/chat');
+    if (username.length === 0) return;
+    const ws = new WebSocket(`ws://localhost:8080/chat?username=${username}`);
     wsRef.current = ws;
     ws.onopen = () => {
       console.log("WebSocket connection opened");
@@ -29,7 +32,7 @@ function App() {
       ws.close();
       wsRef.current = null;
     }
-  }, [])
+  }, [username])
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -56,7 +59,11 @@ function App() {
   return (
     <>
       <section id="center">
-        <div id='chat-box' style={{ display: 'flex', flexDirection: 'column', height: '400px', width: '300px', border: '1px solid black', padding: '10px' }}>
+      <input type="text" ref={nameInputRef} placeholder='Enter username...' style={{ marginBottom: '10px' }} />
+      <button onClick={() => setUsername(nameInputRef.current?.value || '')} style={{ marginBottom: '20px' }}>
+        Connect
+      </button>
+        <div id='chat-box' style={{ display: 'flex', flexDirection: 'column', height: '400px', width: '300px', border: '1px solid white', padding: '10px' }}>
           {messages.map((msg, idx) => (
             <div key={idx} style={{ marginBottom: '5px', border: '1px solid black', padding: '5px' }}>
               {msg}
