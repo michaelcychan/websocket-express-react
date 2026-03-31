@@ -1,23 +1,33 @@
 import { useEffect, useRef, useState } from 'react'
-
 import './App.css'
+import { sendWS } from './utils/sendWS';
 
 function App() {
   const [messages, setMessages] = useState<string[]>([]);
   const wsRef = useRef<null | WebSocket>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
-  const [username, setUsername] = useState<string>('');
+  const [isConnected, setIsConnected] = useState(false);
 
-  useEffect(() => {
-    if (username.length === 0) return;
-    const ws = new WebSocket(`ws://localhost:8080/chat?username=${username}`);
+  const handleDisconnect = () => {
+    if (wsRef.current) {
+      wsRef.current.close();
+    }
+    wsRef.current = null;
+    setIsConnected(false);
+  }
+
+  const handleConnect = () => {
+    const name = nameInputRef.current?.value || '';
+    if (name.trim().length === 0 || isConnected) return;
+    if (wsRef.current) return;
+    const ws = new WebSocket(`ws://localhost:8080/chat?username=${name}`);
     wsRef.current = ws;
     ws.onopen = () => {
       console.log("WebSocket connection opened");
       setMessages(prev => [...prev, 'Websocket connected!'])
+      setIsConnected(true);
     }
-
     ws.onmessage = (event) => {
       console.log(`Received message: ${event.data}`);
       setMessages(prev => [...prev, event.data])
@@ -26,17 +36,20 @@ function App() {
     ws.onclose = () => {
       console.log("WebSocket connection closed");
       setMessages(prev => [...prev, 'Websocket disconnected!'])
-    }
-
-    return () => {
-      ws.close();
       wsRef.current = null;
+      setIsConnected(false);
     }
-  }, [username])
+  }
 
   useEffect(() => {
     inputRef.current?.focus();
-  },[])
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      handleDisconnect();
+    }
+  }, [])
 
 
   const handleSendMessage = () => {
@@ -44,7 +57,7 @@ function App() {
     const message = input.value.trim();
     if (message && wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       console.log(`Sending message: ${message}`);
-      wsRef.current.send(message);
+      sendWS(wsRef.current, message);
       input.value = '';
       inputRef.current?.focus();
     }
@@ -59,10 +72,15 @@ function App() {
   return (
     <>
       <section id="center">
-      <input type="text" ref={nameInputRef} placeholder='Enter username...' style={{ marginBottom: '10px' }} />
-      <button onClick={() => setUsername(nameInputRef.current?.value || '')} style={{ marginBottom: '20px' }}>
-        Connect
-      </button>
+        <input type="text" ref={nameInputRef} placeholder='Enter username...' style={{ marginBottom: '10px' }} />
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button onClick={() => handleConnect()} style={{ marginBottom: '20px' }} disabled={isConnected}>
+            Connect
+          </button>
+          <button onClick={() => handleDisconnect()} style={{ marginBottom: '20px' }} disabled={!isConnected}>
+            Disconnect
+          </button>
+        </div>
         <div id='chat-box' style={{ display: 'flex', flexDirection: 'column', height: '400px', width: '300px', border: '1px solid white', padding: '10px' }}>
           {messages.map((msg, idx) => (
             <div key={idx} style={{ marginBottom: '5px', border: '1px solid black', padding: '5px' }}>

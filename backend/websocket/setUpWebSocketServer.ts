@@ -1,8 +1,10 @@
-import { type Server, WebSocket, WebSocketServer } from 'ws'
+import { WebSocket, WebSocketServer } from 'ws'
 import { createServer } from "http";
 import { parse } from 'url';
 import { mockAuthentication } from './mockAuthentication';
 import type { ClientType } from './clientType';
+import { messageSchemas } from "my-shared-ws";
+import { parseMessages } from './utils/parseMessages';
 
 const maxClients = 5;
 const clients = new Map<WebSocket, ClientType>();
@@ -48,9 +50,11 @@ export const setUpWebSocketServer = (server: ReturnType<typeof createServer>) =>
     }
     
     ws.on('message', (message) => {
+      const msg = parseMessages(message);
+      if (!msg) return;
       for (const client of wss.clients) {
         if (client.readyState === WebSocket.OPEN) {
-          client.send(`Client ${clients.get(ws)?.name} says: ${message}`);
+          client.send(`Client ${clients.get(ws)?.name} says: ${msg.content}`);
         }
       }
     });
