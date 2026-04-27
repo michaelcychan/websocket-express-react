@@ -1,10 +1,10 @@
-import { MessageSchema, type Message } from "my-shared-ws";
+import { clientMessageSchema, type ClientMessage } from "my-shared-ws";
 import { WebSocket } from 'ws'
 
-export const parseMessages = (data: WebSocket.RawData): Message | null => {
+export const parseMessages = (data: WebSocket.RawData): ClientMessage | null => {
   try {
     const parsed = JSON.parse(data.toString());
-    const result = MessageSchema.safeParse(parsed);
+    const result = clientMessageSchema.safeParse(parsed);
     if (!result.success) {
       console.error("Received invalid message:", result.error);
       return null;

@@ -3,8 +3,8 @@ import { createServer } from "http";
 import { parse } from 'url';
 import { mockAuthentication } from './mockAuthentication';
 import type { ClientType } from './clientType';
-import { messageSchemas } from "my-shared-ws";
 import { parseMessages } from './utils/parseMessages';
+import { sendClientMessage, sendSystemMessage } from './utils/sendMessage';
 
 const maxClients = 5;
 const clients = new Map<WebSocket, ClientType>();
@@ -45,7 +45,7 @@ export const setUpWebSocketServer = (server: ReturnType<typeof createServer>) =>
 
     for (const client of wss.clients) {
       if (client.readyState === WebSocket.OPEN) {
-        client.send(`Client ${clients.get(ws)?.name} has joined the chat.`);
+        sendSystemMessage({ws: client, message: {content: `Client ${clients.get(ws)?.name} has joined the chat.`}});
       }
     }
     
@@ -54,7 +54,10 @@ export const setUpWebSocketServer = (server: ReturnType<typeof createServer>) =>
       if (!msg) return;
       for (const client of wss.clients) {
         if (client.readyState === WebSocket.OPEN) {
-          client.send(`Client ${clients.get(ws)?.name} says: ${msg.content}`);
+          sendClientMessage({ws: client, message: {
+            content: msg.content,
+            sender: clients.get(ws)?.name || "Client",
+          }});
         }
       }
     });
@@ -62,7 +65,7 @@ export const setUpWebSocketServer = (server: ReturnType<typeof createServer>) =>
       console.log("WebSocket connection closed for client ID:", clients.get(ws)?.name);
       for (const client of wss.clients) {
         if (client.readyState === WebSocket.OPEN) {
-          client.send(`Client ${clients.get(ws)?.name} has left the chat.`);
+          sendSystemMessage({ws: client, message: {content: `Client ${clients.get(ws)?.name} has left the chat.`}});
         }
       }
       clients.delete(ws);

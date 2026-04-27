@@ -1,8 +1,10 @@
 # Websocket Express React (Study Project)
 
-Simple learning project to build a real-time app with:
+Simple learning project to build a real-time chat app with websocket:
 - `backend/`: Express + WebSocket server in TypeScript
 - `frontend/`: React + Vite client in TypeScript
+
+![](./websocket-chat.jpg)
 
 ## What this project is about
 

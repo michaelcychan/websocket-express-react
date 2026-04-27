@@ -1,2 +1,2 @@
-export { MessageSchema, SystemHeartBeatSchema } from "./messages/messageSchemas";
-export type { Message, SystemHeartBeat } from "./messages/messageSchemas";
+export { messageSchema, systemHeartBeatSchema, clientMessageSchema, systemMessageSchema } from "./messages/messageSchemas";
+export type { Message, SystemHeartBeat, ClientMessage, SystemMessage } from "./messages/messageSchemas";
